@@ -77,17 +77,34 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = SubResource("Theme_qq3yp")
 
+[node name="ColorRect" type="ColorRect" parent="Balloon"]
+offset_left = 864.0
+offset_right = 1152.0
+offset_bottom = 648.0
+color = Color(0, 0, 0, 0.784314)
+
+[node name="DialogueLabel" parent="Balloon" instance=ExtResource("2_a8ve6")]
+unique_name_in_owner = true
+layout_mode = 2
+anchors_preset = 0
+anchor_right = 0.0
+offset_left = 874.0
+offset_top = 10.0
+offset_right = 1142.0
+offset_bottom = 638.0
+size_flags_vertical = 3
+text = "Dialogue..."
+
 [node name="Panel" type="Panel" parent="Balloon"]
+visible = false
 clip_children = 2
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 21.0
-offset_top = -183.0
-offset_right = -19.0
-offset_bottom = -19.0
+offset_left = 864.0
+offset_top = -648.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 1
@@ -105,6 +122,7 @@ layout_mode = 2
 
 [node name="CharacterLabel" type="RichTextLabel" parent="Balloon/Panel/Dialogue/VBoxContainer"]
 unique_name_in_owner = true
+visible = false
 modulate = Color(1, 1, 1, 0.501961)
 layout_mode = 2
 mouse_filter = 1
@@ -113,25 +131,21 @@ text = "Character"
 fit_content = true
 scroll_active = false
 
-[node name="DialogueLabel" parent="Balloon/Panel/Dialogue/VBoxContainer" instance=ExtResource("2_a8ve6")]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-text = "Dialogue..."
-
 [node name="Responses" type="MarginContainer" parent="Balloon"]
+visible = false
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -147.0
-offset_top = -558.0
-offset_right = 494.0
-offset_bottom = -154.0
+offset_left = -392.0
+offset_top = -432.0
+offset_right = 249.0
+offset_bottom = -28.0
 grow_horizontal = 2
 grow_vertical = 0
+metadata/_edit_group_ = true
 
 [node name="ResponsesMenu" type="VBoxContainer" parent="Balloon/Responses" node_paths=PackedStringArray("response_template")]
 unique_name_in_owner = true
