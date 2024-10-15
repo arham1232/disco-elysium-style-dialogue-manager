@@ -78,6 +78,7 @@ grow_vertical = 2
 theme = SubResource("Theme_qq3yp")
 
 [node name="ColorRect" type="ColorRect" parent="Balloon"]
+layout_mode = 0
 offset_left = 864.0
 offset_right = 1152.0
 offset_bottom = 648.0

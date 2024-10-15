@@ -41,7 +41,6 @@ signal finished_typing()
 
 var _already_mutated_indices: PackedInt32Array = []
 
-
 ## The current line of dialogue.
 var dialogue_line:
     set(next_dialogue_line):
@@ -66,7 +65,6 @@ var _last_mutation_index: int = -1
 var _waiting_seconds: float = 0
 var _is_awaiting_mutation: bool = false
 
-
 func _process(delta: float) -> void:
     if self.is_typing:
         # Type out text
@@ -82,7 +80,6 @@ func _process(delta: float) -> void:
             _mutate_inline_mutations(get_total_character_count())
             self.is_typing = false
 
-
 func _unhandled_input(event: InputEvent) -> void:
     # Note: this will no longer be reached if using Dialogue Manager > 2.32.2. To make skip handling
     # simpler (so all of mouse/keyboard/joypad are together) it is now the responsibility of the
@@ -90,7 +87,6 @@ func _unhandled_input(event: InputEvent) -> void:
     if self.is_typing and visible_ratio < 1 and InputMap.has_action(skip_action) and event.is_action_pressed(skip_action):
         get_viewport().set_input_as_handled()
         skip_typing()
-
 
 ## Start typing out the text
 func type_out() -> void:
@@ -107,13 +103,15 @@ func type_out() -> void:
     # Allow typing listeners a chance to connect
     await get_tree().process_frame
 
-    if get_total_character_count() == 0:
-        self.is_typing = false
-    elif seconds_per_step == 0:
-        _mutate_remaining_mutations()
-        visible_characters = get_total_character_count()
-        self.is_typing = false
-
+    #region NOTE: CUSTOM CODE
+    #if get_total_character_count() == 0:
+        #self.is_typing = false
+    #elif seconds_per_step == 0:
+        #_mutate_remaining_mutations()
+        #visible_characters = get_total_character_count()
+        #self.is_typing = false
+    skip_typing()
+    #region
 
 ## Stop typing out the text and jump right to the end
 func skip_typing() -> void:
@@ -121,7 +119,6 @@ func skip_typing() -> void:
     visible_characters = get_total_character_count()
     self.is_typing = false
     skipped_typing.emit()
-
 
 # Type out the next character(s)
 func _type_next(delta: float, seconds_needed: float) -> void:
@@ -157,11 +154,9 @@ func _type_next(delta: float, seconds_needed: float) -> void:
         else:
             _type_next(delta, seconds_needed)
 
-
 # Get the pause for the current typing position if there is one
 func _get_pause(at_index: int) -> float:
     return dialogue_line.pauses.get(at_index, 0)
-
 
 # Get the speed for the current typing position
 func _get_speed(at_index: int) -> float:
@@ -172,12 +167,10 @@ func _get_speed(at_index: int) -> float:
         speed = dialogue_line.speeds[index]
     return speed
 
-
 # Run any inline mutations that haven't been run yet
 func _mutate_remaining_mutations() -> void:
     for i in range(visible_characters, get_total_character_count() + 1):
         _mutate_inline_mutations(i)
-
 
 # Run any mutations at the current typing position
 func _mutate_inline_mutations(index: int) -> void:
@@ -191,7 +184,6 @@ func _mutate_inline_mutations(index: int) -> void:
             # The DialogueManager can't be referenced directly here so we need to get it by its path
             await Engine.get_singleton("DialogueManager").mutate(inline_mutation[1], dialogue_line.extra_game_states, true)
             _is_awaiting_mutation = false
-
 
 # Determine if the current autopause character at the cursor should qualify to pause typing.
 func _should_auto_pause() -> bool:
