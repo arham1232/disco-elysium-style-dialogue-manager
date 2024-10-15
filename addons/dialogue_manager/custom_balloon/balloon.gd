@@ -39,9 +39,6 @@ var dialogue_line: DialogueLine:
 
         dialogue_line = next_dialogue_line
 
-        #character_label.visible = not dialogue_line.character.is_empty()
-        #character_label.text = tr(dialogue_line.character, "dialogue")
-
         dialogue_label.hide()
         dialogue_label.dialogue_line = dialogue_line
 
@@ -60,7 +57,7 @@ var dialogue_line: DialogueLine:
         # Wait for input
         if dialogue_line.responses.size() > 0:
             balloon.focus_mode = Control.FOCUS_NONE
-            responses_menu.show()
+            #responses_menu.show()
         elif dialogue_line.time != "":
             var time = dialogue_line.text.length() * 0.02 if dialogue_line.time == "auto" else dialogue_line.time.to_float()
             await get_tree().create_timer(time).timeout
@@ -75,15 +72,11 @@ var dialogue_line: DialogueLine:
 ## The base balloon anchor
 @onready var balloon: Control = %Balloon
 
-## The label showing the name of the currently speaking character
-#@onready var character_label: RichTextLabel = %CharacterLabel
-
 ## The label showing the currently spoken dialogue
 @onready var dialogue_label: DialogueLabel = %DialogueLabel
 
 ## The menu of responses
 @onready var responses_menu: DialogueResponsesMenu = %ResponsesMenu
-
 
 func _ready() -> void:
     balloon.hide()
@@ -92,12 +85,24 @@ func _ready() -> void:
     # If the responses menu doesn't have a next action set, use this one
     if responses_menu.next_action.is_empty():
         responses_menu.next_action = next_action
+    
+    # connects a signal so that (via interrupt logic) the dialogue panel 
+    # changes size according to screen size
+    get_tree().get_root().size_changed.connect(_resize)
 
-
+# used with signal connected in _ready() to change panel size according
+# to screen resolution using intterrupt logic
+const BORDER = Vector2(10, 20)
+func _resize():
+    var resolution = get_viewport().get_visible_rect().size
+    $Balloon/ColorRect.size = Vector2(resolution.x/4, resolution.y)
+    $Balloon/ColorRect.position = Vector2(resolution.x * 3/4, 0)
+    dialogue_label.size = $Balloon/ColorRect.size - BORDER
+    dialogue_label.position = $Balloon/ColorRect.position + BORDER * 0.5
+    
 func _unhandled_input(_event: InputEvent) -> void:
     # Only the balloon is allowed to handle input while it's showing
     get_viewport().set_input_as_handled()
-
 
 func _notification(what: int) -> void:
     ## Detect a change of locale and update the current dialogue line to show the new language
@@ -108,7 +113,6 @@ func _notification(what: int) -> void:
         if visible_ratio < 1:
             dialogue_label.skip_typing()
 
-
 ## Start some dialogue
 func start(dialogue_resource: DialogueResource, title: String, extra_game_states: Array = []) -> void:
     temporary_game_states =  [self] + extra_game_states
@@ -116,14 +120,11 @@ func start(dialogue_resource: DialogueResource, title: String, extra_game_states
     resource = dialogue_resource
     self.dialogue_line = await resource.get_next_dialogue_line(title, temporary_game_states)
 
-
 ## Go to the next line
 func next(next_id: String) -> void:
     self.dialogue_line = await resource.get_next_dialogue_line(next_id, temporary_game_states)
 
-
 #region Signals
-
 
 func _on_mutated(_mutation: Dictionary) -> void:
     is_waiting_for_input = false
@@ -133,7 +134,6 @@ func _on_mutated(_mutation: Dictionary) -> void:
             will_hide_balloon = false
             balloon.hide()
     )
-
 
 func _on_balloon_gui_input(event: InputEvent) -> void:
     # See if we need to skip typing of the dialogue
@@ -156,9 +156,7 @@ func _on_balloon_gui_input(event: InputEvent) -> void:
     elif event.is_action_pressed(next_action) and get_viewport().gui_get_focus_owner() == balloon:
         next(dialogue_line.next_id)
 
-
 func _on_responses_menu_response_selected(response: DialogueResponse) -> void:
     next(response.next_id)
-
 
 #endregion

@@ -5,7 +5,7 @@
 ## A RichTextLabel specifically for use with [b]Dialogue Manager[/b] dialogue.
 class_name DialogueLabel extends RichTextLabel
 
-
+#region Signals
 ## Emitted for each letter typed out.
 signal spoke(letter: String, letter_index: int, speed: float)
 
@@ -17,8 +17,9 @@ signal skipped_typing()
 
 ## Emitted when typing finishes.
 signal finished_typing()
+#endregion
 
-
+#region Export Vars
 # The action to press to skip typing.
 @export var skip_action: StringName = &"ui_cancel"
 
@@ -38,6 +39,7 @@ signal finished_typing()
 
 ## The amount of time to pause when exposing a character present in `pause_at_characters`.
 @export var seconds_per_pause_step: float = 0.3
+#endregion
 
 var _already_mutated_indices: PackedInt32Array = []
 
@@ -46,7 +48,7 @@ var dialogue_line:
     set(next_dialogue_line):
         dialogue_line = next_dialogue_line
         custom_minimum_size = Vector2.ZERO
-        text = dialogue_line.text
+        #text = dialogue_line.text
     get:
         return dialogue_line
 
@@ -65,6 +67,9 @@ var _last_mutation_index: int = -1
 var _waiting_seconds: float = 0
 var _is_awaiting_mutation: bool = false
 
+func _ready():
+    text = ""
+
 func _process(delta: float) -> void:
     if self.is_typing:
         # Type out text
@@ -80,17 +85,10 @@ func _process(delta: float) -> void:
             _mutate_inline_mutations(get_total_character_count())
             self.is_typing = false
 
-func _unhandled_input(event: InputEvent) -> void:
-    # Note: this will no longer be reached if using Dialogue Manager > 2.32.2. To make skip handling
-    # simpler (so all of mouse/keyboard/joypad are together) it is now the responsibility of the
-    # dialogue balloon.
-    if self.is_typing and visible_ratio < 1 and InputMap.has_action(skip_action) and event.is_action_pressed(skip_action):
-        get_viewport().set_input_as_handled()
-        skip_typing()
-
 ## Start typing out the text
+var selected_response_number: int
 func type_out() -> void:
-    text = dialogue_line.text
+    text += "%s – %s" % [dialogue_line.character.to_upper(), dialogue_line.text]
     visible_characters = 0
     visible_ratio = 0
     _waiting_seconds = 0
@@ -103,15 +101,35 @@ func type_out() -> void:
     # Allow typing listeners a chance to connect
     await get_tree().process_frame
 
-    #region NOTE: CUSTOM CODE
-    #if get_total_character_count() == 0:
-        #self.is_typing = false
-    #elif seconds_per_step == 0:
-        #_mutate_remaining_mutations()
-        #visible_characters = get_total_character_count()
-        #self.is_typing = false
+    #region Custom functionality: disco elysium style dialogue
     skip_typing()
+    text += "\n\n"
+    for n in range(dialogue_line.responses.size()):
+        var response = dialogue_line.responses[n].text
+        selected_response_number = n+1
+        text += "[color=%s][url=%s]%d. %s[/url][/color]\n" % ["#f04442", response, n+1, response]
+    #text += "\n"
+    visible_characters = get_total_character_count()
     #endregion
+
+# NOTE: CUSTOM CODE. for use with custom DE style dialogue
+func _on_meta_clicked(meta):
+    var responses = get_parent().get_node("%ResponsesMenu").responses
+    print(meta)
+    # find matching response, then continue dialogue according to that response
+    for r in responses:
+        if r.text == meta:
+            text = text.replace("[color=%s][url=%s]" %["#f04442", r.text], 
+            "[color=%s]YOU – " % ["#898d90"])    # recolour text and alter spacing
+            text = text.erase(text.find(meta+"[/url]")-3, 3)    # erase behind
+            text = text.erase(text.find(meta)+meta.length(), 6) # erase front
+            text += "\n"
+            # progresses dialogue according to choice
+            get_parent().get_parent()._on_responses_menu_response_selected(r)
+        else:
+            # erases unchosen responses
+            text = text.replace(r.text, "")
+            text = text.erase(text.find("[color=#f04442]"), 39)
 
 ## Stop typing out the text and jump right to the end
 func skip_typing() -> void:
