@@ -111,7 +111,7 @@ func type_out() -> void:
         #visible_characters = get_total_character_count()
         #self.is_typing = false
     skip_typing()
-    #region
+    #endregion
 
 ## Stop typing out the text and jump right to the end
 func skip_typing() -> void:
